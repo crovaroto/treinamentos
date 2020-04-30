@@ -1,8 +1,10 @@
 const express = require('express');
+const cors = require('cors');
 const { uuid, isUuid } = require('uuidv4');
 
 const app = express();
 
+app.use(cors());
 app.use(express.json());
 
 const projects = [];
@@ -19,7 +21,7 @@ function logRequests(request, response, next) {
 
 function validateProjectId(request, response, next) {
   const { id } = request.params;
-
+  
   if (!isUuid(id)) {
     return response.status(400).json( { error: 'Project ID not found.' } );
   }
@@ -31,20 +33,21 @@ app.use(logRequests);
 app.use('/projects/:id', validateProjectId);
 
 app.get('/projects', (request, response) => {
+  const { title } = request.query;
 
-  return response.json(projects);
+  const results = title 
+  ? projects.filter(project => project.title.includes(title))
+  : projects;
+
+  return response.json(results);
 });
 
 app.post('/projects', (request, response) => {
-  const { title } = request.body;
-
-  const results = title 
-    ? projects.filter(project => project.title.includes(title))
-    : projects;
+  const { title, owner } = request.body;
 
   const project = { id: uuid(), title, owner }; 
 
-  projects.push(results);
+  projects.push(project);
 
   return response.json(project);
 });
